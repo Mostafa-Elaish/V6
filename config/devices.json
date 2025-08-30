@@ -1,0 +1,8 @@
+{
+  "lights": [
+    {"name": "Living Room Light", "ip": "192.168.1.50"}
+  ],
+  "sensors": [
+    {"name": "Temperature Sensor", "type": "DHT22", "pin": 4}
+  ]
+}
