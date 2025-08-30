@@ -1,0 +1,27 @@
+<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jarvis Dashboard (Demo)</title>
+<style>
+body{font-family:Arial;margin:20px}
+.joy{width:240px;height:240px;border-radius:50%;border:2px solid #ccc;position:relative;touch-action:none}
+.stick{width:80px;height:80px;border-radius:50%;background:#777;position:absolute;left:80px;top:80px}
+</style></head><body>
+<h1>Jarvis Dashboard (Demo)</h1>
+<div class="joy" id="joy"><div class="stick" id="stick"></div></div>
+<div><button onclick="fetch('/guard?toggle=1').then(r=>r.json()).then(j=>alert('Guard: '+j.enabled))">Toggle Guard</button></div>
+<script>
+const joy=document.getElementById('joy'); const stick=document.getElementById('stick');
+let dragging=false;
+function send(vx,vy){ fetch('/move',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({vx,vy})}); }
+joy.addEventListener('pointerdown',e=>{dragging=true});
+window.addEventListener('pointerup',e=>{dragging=false; stick.style.left='80px'; stick.style.top='80px'; send(0,0);});
+window.addEventListener('pointermove',e=>{
+  if(!dragging) return;
+  const rect=joy.getBoundingClientRect(); const cx=rect.left+rect.width/2; const cy=rect.top+rect.height/2;
+  const dx=e.clientX-cx; const dy=e.clientY-cy;
+  const r=Math.min(80, Math.hypot(dx,dy)); const a=Math.atan2(dy,dx);
+  const x=Math.cos(a)*r; const y=Math.sin(a)*r;
+  stick.style.left=(80+x)+'px'; stick.style.top=(80+y)+'px';
+  const vx=(x/80).toFixed(2), vy=(y/80).toFixed(2);
+  send(vx,vy);
+});
+</script></body></html>
