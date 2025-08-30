@@ -1,73 +1,67 @@
-# src/guard_mode.py
+# # src/guard_mode.py
 """
-Jarvis - Guard Mode Module
-Handles security features:
- - Face recognition + voice recognition
- - Guard mode ON/OFF
- - Configurable waiting times
- - Snapshot / video evidence
- - Telegram alerts
+Jarvis - Guard Mode with Face + Voice Recognition
 """
 
 import time
-import threading
-from src.camera import Camera
+from src.face_recognition_module import FaceRecognition
 from src.voice_recognition import VoiceRecognition
-from src.telegram_alert import TelegramAlert
-from src.settings_manager import SettingsManager
+from src.alerts import Alerts
 
 class GuardMode:
-    def __init__(self, settings: SettingsManager):
-        self.settings = settings
-        self.camera = Camera(settings)
-        self.voice = VoiceRecognition(settings)
-        self.telegram = TelegramAlert(settings)
+    def __init__(self, wait_time=10, alarm_duration=60, enable_guard=True):
+        self.face_recognition = FaceRecognition()
+        self.voice_recognition = VoiceRecognition()
+        self.alerts = Alerts()
+        self.wait_time = wait_time
+        self.alarm_duration = alarm_duration
+        self.enable_guard = enable_guard
 
-        self.active = False
-        self.wait_time = self.settings.get("guard_wait_time", 10)
-        self.alarm_duration = self.settings.get("alarm_duration", 30)
+    def verify_identity(self):
+        """
+        Verify both face & voice before allowing access
+        """
+        print("🔒 Guard Mode Active")
 
-    def enable(self):
-        self.active = True
-        print("🛡️ Guard Mode ENABLED")
+        # Step 1 – Detect Face
+        face_name = self.face_recognition.recognize_face()
 
-    def disable(self):
-        self.active = False
-        print("🛑 Guard Mode DISABLED")
+        # Step 2 – Detect Voice
+        audio_file = self.voice_recognition.listen_and_save()
+        voice_name = self.voice_recognition.recognize_voice(audio_file)
 
-    def monitor(self):
-        while self.active:
-            print("👁️ Monitoring...")
-            face_name = self.camera.recognize_face()
+        # Step 3 – Decision Logic
+        if face_name and voice_name:
+            if face_name == voice_name:
+                print(f"✅ Identity verified: {face_name}")
+                return True
+            else:
+                print(f"⚠️ Face ({face_name}) does not match Voice ({voice_name})")
+                self._handle_unknown()
+                return False
 
-            if face_name == "Unknown":
-                print("⚠️ Unknown face detected!")
-                self.telegram.send_alert("🚨 Unknown face detected!")
+        elif face_name and not voice_name:
+            print(f"⚠️ Face recognized as {face_name}, but voice unknown")
+            self._handle_unknown()
+            return False
 
-                # Take evidence (snapshot or video)
-                if self.settings.get("evidence_mode", "snapshot") == "snapshot":
-                    file_path = self.camera.take_snapshot()
-                else:
-                    duration = self.settings.get("video_duration", 5)
-                    file_path = self.camera.record_video(duration)
+        elif not face_name and voice_name:
+            print(f"⚠️ Voice recognized as {voice_name}, but face unknown")
+            self._handle_unknown()
+            return False
 
-                # Send to Telegram
-                self.telegram.send_file(file_path)
+        else:
+            print("❌ Unknown face and unknown voice")
+            self._handle_unknown()
+            return False
 
-                # Ask for identity (voice response)
-                audio = self.voice.listen(timeout=self.wait_time)
-                if audio:
-                    response = self.voice.recognize_speech(audio)
-                    if response:
-                        self.telegram.send_alert(f"🗣 Person said: {response}")
-                    else:
-                        self.trigger_alarm()
-                else:
-                    self.trigger_alarm()
+    def _handle_unknown(self):
+        """
+        Ask 'Who are you?' → Wait → Alarm if no valid response
+        """
+        print("🤖 Jarvis: 'I don’t know you, who are you?'")
+        time.sleep(self.wait_time)
 
-            time.sleep(2)  # small delay between checks
-
-    def trigger_alarm(self):
-        print("🚨 ALARM TRIGGERED!")
-        self.telegram.send_alert("🚨 ALARM TRIGGERED!")
-        self.camera.flash_rgb("red", duration=self.alarm_duration)
+        # If no manual confirmation → alarm
+        print("🚨 Triggering alarm (Guard Mode)")
+        self.alerts.trigger_alarm(duration=self.alarm_duration)
