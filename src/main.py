@@ -1,21 +1,34 @@
+# src/main.py
+"""
+Jarvis AI Robot - Main Entry Point
+"""
+
 from face_recognition import FaceRecognition
 from voice_recognition import VoiceRecognition
 from movement_control import MovementControl
 from guard_mode import GuardMode
-from telegram_interface import TelegramInterface
+from telegram_interface import TelegramBot
 from settings_manager import SettingsManager
 
 def main():
-    print("🚀 Jarvis AI starting...")
+    print("🚀 Starting Jarvis...")
 
+    # Load settings
     settings = SettingsManager("config/config.json")
+
+    # Initialize modules
     face = FaceRecognition(settings)
     voice = VoiceRecognition(settings)
-    move = MovementControl(settings)
-    guard = GuardMode(settings, face, voice)
-    telegram = TelegramInterface(settings, guard)
+    movement = MovementControl(settings)
+    guard = GuardMode(face, voice, settings)
+    telegram = TelegramBot(settings, guard, movement)
 
-    print("✅ Jarvis is running. Use Telegram or voice command to interact.")
+    # Main loop
+    try:
+        while True:
+            guard.run_cycle()
+    except KeyboardInterrupt:
+        print("🛑 Jarvis shutting down...")
 
 if __name__ == "__main__":
     main()
