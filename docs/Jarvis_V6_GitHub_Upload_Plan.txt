@@ -1,0 +1,45 @@
+
+# GitHub Upload Plan for Jarvis V6
+
+## Step 1 – Docs (all PDFs)
+- Upload files from `/docs/`:
+  - Wiring_Guide.pdf
+  - Features_List.pdf
+  - User_Manual.pdf
+  - Dev_Guide.pdf
+- Commit message: "Add documentation"
+
+## Step 2 – Config
+- Upload file from `/config/`:
+  - system.json
+- Commit message: "Add config template"
+
+## Step 3 – Installer
+- Upload files from `/install/`:
+  - install.sh
+  - requirements.txt
+- Commit message: "Add installer and dependencies"
+
+## Step 4 – Source Code
+- Upload files from `/src/`:
+  - /vision/face_recognition.py
+  - /audio/recorder.py
+  - /movement/flask_server.py
+- Commit message: "Add core source code"
+
+## Step 5 – Web Dashboard
+- Upload file from `/web_dashboard/`:
+  - index.html
+- Commit message: "Add web dashboard"
+
+## Step 6 – Demo & Media
+- Upload files from `/demo/`:
+  - /faces/Alice/ (example images)
+  - /faces/Bob/ (example images)
+  - /media/ (.keep placeholder if empty)
+- Commit message: "Add demo resources"
+
+## Step 7 – Root files
+- Upload to repo root:
+  - README.md
+- Commit message: "Add README"
