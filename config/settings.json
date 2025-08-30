@@ -1,0 +1,27 @@
+{
+  "system": {
+    "name": "Jarvis",
+    "wake_word": "Jarvis",
+    "master_pin": "1234"
+  },
+  "security": {
+    "guard_mode": false,
+    "unknown_face_wait": 10,
+    "alarm_duration": 60,
+    "rgb_alert_enabled": true
+  },
+  "recognition": {
+    "face_enabled": true,
+    "voice_enabled": true,
+    "link_faces_to_voices": true
+  },
+  "notifications": {
+    "telegram_enabled": false,
+    "telegram_bot_token": "",
+    "telegram_chat_id": "",
+    "send_snapshots": true,
+    "send_videos": false,
+    "video_duration": 5,
+    "retention_days": 30
+  }
+}
