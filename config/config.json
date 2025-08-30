@@ -8,4 +8,9 @@
   "notifications": {
     "telegram": true
   }
+    "guard_mode": false,
+  "face_recognition": true,
+  "voice_recognition": false,
+  "wait_time": 10,
+  "alarm_duration": 60
 }
