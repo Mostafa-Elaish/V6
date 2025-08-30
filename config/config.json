@@ -1,0 +1,11 @@
+{
+  "wake_word": "Jarvis",
+  "guard_mode": true,
+  "waiting_time": 10,
+  "alarm_duration": 60,
+  "video_duration": 5,
+  "retention_days": 30,
+  "notifications": {
+    "telegram": true
+  }
+}
