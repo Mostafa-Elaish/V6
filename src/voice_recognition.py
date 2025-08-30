@@ -1,65 +1,66 @@
 # src/voice_recognition.py
 """
 Jarvis - Voice Recognition Module
-Uses speech recognition for voice commands & speaker identification.
+Identifies speakers and links them to saved face profiles
 """
 
-import speech_recognition as sr
 import os
-import time
+import numpy as np
+import speech_recognition as sr
+import librosa
+import pickle
 
 class VoiceRecognition:
-    def __init__(self, settings):
-        self.settings = settings
+    def __init__(self, db_path="data/voice_profiles/"):
+        self.db_path = db_path
+        os.makedirs(self.db_path, exist_ok=True)
         self.recognizer = sr.Recognizer()
-        self.microphone = sr.Microphone()
 
-        # Directory for storing registered voices
-        self.data_path = "config/voices"
-        os.makedirs(self.data_path, exist_ok=True)
+    def _extract_features(self, audio_file):
+        """Extract MFCC features from audio file for speaker recognition"""
+        y, sr_rate = librosa.load(audio_file, sr=None)
+        mfcc = librosa.feature.mfcc(y=y, sr=sr_rate, n_mfcc=13)
+        return np.mean(mfcc.T, axis=0)
 
-        # Load trained voices (placeholder - needs model training)
-        self.known_voices = {}  # {name: "voiceprint_data"}
+    def enroll_voice(self, name: str, audio_file: str):
+        """Enroll a new voice and link it with a person"""
+        features = self._extract_features(audio_file)
+        profile_path = os.path.join(self.db_path, f"{name}.pkl")
 
-    def listen(self, timeout=5):
-        with self.microphone as source:
+        with open(profile_path, "wb") as f:
+            pickle.dump(features, f)
+
+        print(f"✅ Voice enrolled for {name}")
+
+    def recognize_voice(self, audio_file: str):
+        """Recognize who is speaking from stored profiles"""
+        features = self._extract_features(audio_file)
+        best_match = None
+        best_score = float("inf")
+
+        for file in os.listdir(self.db_path):
+            if file.endswith(".pkl"):
+                with open(os.path.join(self.db_path, file), "rb") as f:
+                    stored_features = pickle.load(f)
+                    distance = np.linalg.norm(features - stored_features)
+                    if distance < best_score:
+                        best_score = distance
+                        best_match = file.replace(".pkl", "")
+
+        if best_match:
+            print(f"🎤 Recognized voice: {best_match}")
+            return best_match
+        else:
+            print("❌ Unknown voice")
+            return None
+
+    def listen_and_save(self, save_path="temp_audio.wav"):
+        """Listen via mic and save audio"""
+        with sr.Microphone() as source:
             print("🎤 Listening...")
-            self.recognizer.adjust_for_ambient_noise(source)
-            try:
-                audio = self.recognizer.listen(source, timeout=timeout)
-                return audio
-            except sr.WaitTimeoutError:
-                print("⏳ Listening timed out.")
-                return None
+            audio = self.recognizer.listen(source)
 
-    def recognize_speech(self, audio):
-        try:
-            text = self.recognizer.recognize_google(audio)
-            print(f"🗣 Recognized: {text}")
-            return text
-        except sr.UnknownValueError:
-            print("❌ Could not understand audio")
-            return None
-        except sr.RequestError:
-            print("⚠️ Speech recognition service unavailable (offline mode needed).")
-            return None
-
-    def register_voice(self, name, audio):
-        timestamp = int(time.time())
-        file_path = os.path.join(self.data_path, f"{name}_{timestamp}.wav")
-
-        with open(file_path, "wb") as f:
-            f.write(audio.get_wav_data())
-
-        print(f"📁 Saved new voice sample for {name}: {file_path}")
-
-        # TODO: Process voiceprint for recognition
-        self.known_voices[name] = file_path
-
-    def identify_speaker(self, audio):
-        """
-        Placeholder for linking voice to known face.
-        Would use ML-based speaker recognition.
-        """
-        # In full implementation, extract MFCC features & compare
-        return "Unknown"
+            with open(save_path, "wb") as f:
+                f.write(audio.get_wav_data())
+            
+            return save_path
